@@ -85,6 +85,21 @@ function rank(query: string, rows: z.infer<typeof resultSchema>[]): Result[] {
   return (relevant.length > 0 ? relevant : scored).slice(0, 8);
 }
 
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
+
+function callGemini(model: string, key: string, prompt: string) {
+  return fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.1 } }),
+    },
+    22_000,
+  );
+}
+
 async function searchWithGemini(query: string): Promise<{ results: Result[]; report: SourceReport }> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: "missing-key" } };
@@ -97,16 +112,18 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
   ].join(" ");
 
   try {
-    const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.1 } }),
-      },
-      22_000,
-    );
+    let response = await callGemini(GEMINI_MODEL, key, prompt);
+    // A retired model answers 404 and names its successor. Following that pointer
+    // once keeps search alive through a retirement instead of going dark until
+    // somebody notices and edits this file.
+    if (response.status === 404) {
+      const detail = (await response.text().catch(() => "")).replace(/\s+/g, " ");
+      const successor = detail.match(/models\/([a-z0-9.-]+)/gi)?.pop()?.replace(/^models\//i, "");
+      if (!successor || successor === GEMINI_MODEL) {
+        return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-404 ${detail.slice(0, 200)}` } };
+      }
+      response = await callGemini(successor, key, prompt);
+    }
 
     if (!response.ok) {
       const detail = (await response.text().catch(() => "")).slice(0, 200);
