@@ -1,0 +1,149 @@
+{
+  "basePath": "data/",
+  "count": 13,
+  "cats": [
+    {
+      "slug": "cat-curious",
+      "label": "Curioso",
+      "role": "descoberta",
+      "usage": "Busca, comparação, onboarding, explorar categorias",
+      "png": "cats/png/cat-curious.png",
+      "png256": "cats/png/cat-curious@256.png",
+      "webp": "cats/webp/cat-curious.webp",
+      "webp256": "cats/webp/cat-curious@256.webp",
+      "source": "GATO CURIOSO.webp"
+    },
+    {
+      "slug": "cat-happy",
+      "label": "Feliz",
+      "role": "sucesso",
+      "usage": "Confirmação, peça comprada, progresso saudável",
+      "png": "cats/png/cat-happy.png",
+      "png256": "cats/png/cat-happy@256.png",
+      "webp": "cats/webp/cat-happy.webp",
+      "webp256": "cats/webp/cat-happy@256.webp",
+      "source": "GATO FELIZ.webp"
+    },
+    {
+      "slug": "cat-ecstatic",
+      "label": "Extremamente feliz",
+      "role": "celebracao",
+      "usage": "Preço alvo atingido, build 100%, marco grande",
+      "png": "cats/png/cat-ecstatic.png",
+      "png256": "cats/png/cat-ecstatic@256.png",
+      "webp": "cats/webp/cat-ecstatic.webp",
+      "webp256": "cats/webp/cat-ecstatic@256.webp",
+      "source": "gato extremamente feliz.webp"
+    },
+    {
+      "slug": "cat-flowers",
+      "label": "Com flores",
+      "role": "carinho",
+      "usage": "Compartilhar build, agradecer, página pública",
+      "png": "cats/png/cat-flowers.png",
+      "png256": "cats/png/cat-flowers@256.png",
+      "webp": "cats/webp/cat-flowers.webp",
+      "webp256": "cats/webp/cat-flowers@256.webp",
+      "source": "gato flores.webp"
+    },
+    {
+      "slug": "cat-pleading",
+      "label": "Com peninha",
+      "role": "incentivo",
+      "usage": "Dica carinhosa, convite gentil, lembrete de favoritar",
+      "png": "cats/png/cat-pleading.png",
+      "png256": "cats/png/cat-pleading@256.png",
+      "webp": "cats/webp/cat-pleading.webp",
+      "webp256": "cats/webp/cat-pleading@256.webp",
+      "source": "gato com peninha.webp"
+    },
+    {
+      "slug": "cat-shy",
+      "label": "Tímido",
+      "role": "primeiro-acesso",
+      "usage": "Empty state inicial, conta nova, nada criado ainda",
+      "png": "cats/png/cat-shy.png",
+      "png256": "cats/png/cat-shy@256.png",
+      "webp": "cats/webp/cat-shy.webp",
+      "webp256": "cats/webp/cat-shy@256.webp",
+      "source": "gato timido com vergonha.webp"
+    },
+    {
+      "slug": "cat-sleeping",
+      "label": "Dormindo",
+      "role": "silencio",
+      "usage": "Sem avisos, sem atividade, lista vazia",
+      "png": "cats/png/cat-sleeping.png",
+      "png256": "cats/png/cat-sleeping@256.png",
+      "webp": "cats/webp/cat-sleeping.webp",
+      "webp256": "cats/webp/cat-sleeping@256.webp",
+      "source": "gato dormindo.webp"
+    },
+    {
+      "slug": "cat-tired",
+      "label": "Cansado",
+      "role": "espera",
+      "usage": "Loading longo, busca em várias lojas, sincronização",
+      "png": "cats/png/cat-tired.png",
+      "png256": "cats/png/cat-tired@256.png",
+      "webp": "cats/webp/cat-tired.webp",
+      "webp256": "cats/webp/cat-tired@256.webp",
+      "source": "gato cansado.webp"
+    },
+    {
+      "slug": "cat-suspicious",
+      "label": "Suspeito",
+      "role": "atencao",
+      "usage": "Possível incompatibilidade, margem apertada, revisar",
+      "png": "cats/png/cat-suspicious.png",
+      "png256": "cats/png/cat-suspicious@256.png",
+      "webp": "cats/webp/cat-suspicious.webp",
+      "webp256": "cats/webp/cat-suspicious@256.webp",
+      "source": "gato suspeito.webp"
+    },
+    {
+      "slug": "cat-sad",
+      "label": "Triste",
+      "role": "frustracao",
+      "usage": "Nenhum resultado, peça cara demais, oferta acabou",
+      "png": "cats/png/cat-sad.png",
+      "png256": "cats/png/cat-sad@256.png",
+      "webp": "cats/webp/cat-sad.webp",
+      "webp256": "cats/webp/cat-sad@256.webp",
+      "source": "gato triste.webp"
+    },
+    {
+      "slug": "cat-crying",
+      "label": "Chorando",
+      "role": "orcamento",
+      "usage": "Orçamento estourado, preço subiu, alvo distante",
+      "png": "cats/png/cat-crying.png",
+      "png256": "cats/png/cat-crying@256.png",
+      "webp": "cats/webp/cat-crying.webp",
+      "webp256": "cats/webp/cat-crying@256.webp",
+      "source": "gato chorando.webp"
+    },
+    {
+      "slug": "cat-indignant",
+      "label": "Indignado",
+      "role": "incompativel",
+      "usage": "Peça que não encaixa, conflito de specs",
+      "png": "cats/png/cat-indignant.png",
+      "png256": "cats/png/cat-indignant@256.png",
+      "webp": "cats/webp/cat-indignant.webp",
+      "webp256": "cats/webp/cat-indignant@256.webp",
+      "source": "gato indignado.webp"
+    },
+    {
+      "slug": "cat-angry",
+      "label": "Zangado",
+      "role": "erro",
+      "usage": "Falha de operação, ação bloqueada, sem conexão",
+      "png": "cats/png/cat-angry.png",
+      "png256": "cats/png/cat-angry@256.png",
+      "webp": "cats/webp/cat-angry.webp",
+      "webp256": "cats/webp/cat-angry@256.webp",
+      "source": "gato zangado.webp"
+    }
+  ]
+}

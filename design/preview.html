@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gabie World — preview de tema</title>
+
+<!-- anti-flash: pinta o tema antes do primeiro paint -->
+<meta name="theme-color" content="#FFF9FB">
+<script>
+  (function () {
+    try {
+      var p = localStorage.getItem('gw-theme');
+      var dark = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  })();
+</script>
+
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="cats.css">
+<style>
+  body { padding: 32px 20px 64px; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .mark {
+    inline-size: 34px; block-size: 34px; border-radius: 11px;
+    background: var(--gw-primary-base); display: grid; place-items: center;
+  }
+  .mark svg { inline-size: 19px; block-size: 19px; stroke: var(--gw-text-on-primary); }
+  .word { font-family: var(--gw-font-brand); font-weight: 600; font-size: 21px; }
+  .word b { color: var(--gw-primary-base); font-weight: 600; }
+
+  /* Theme Toggle — mesmo desenho do componente do Figma */
+  .toggle { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--gw-radius-full); background: var(--gw-bg-neutral); border: 0; }
+  .toggle button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    block-size: 32px; padding-inline: 13px 11px; border: 0; cursor: pointer;
+    border-radius: var(--gw-radius-full); background: transparent;
+    font: 600 13px/18px var(--gw-font-ui); color: var(--gw-text-subtle);
+    transition: background var(--gw-dur-fast) var(--gw-ease-out), color var(--gw-dur-fast) var(--gw-ease-out);
+  }
+  .toggle button svg { inline-size: 16px; block-size: 16px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .toggle button[aria-pressed="true"] { background: var(--gw-bg-surface); color: var(--gw-text-primary); box-shadow: var(--gw-shadow-xs); }
+  .toggle button[aria-pressed="true"] svg { stroke: var(--gw-primary-base); }
+  .toggle button:focus-visible { outline: 3px solid var(--gw-border-primary); outline-offset: 2px; }
+
+  .cols { display: grid; grid-template-columns: 390px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+
+  /* --- telinha --- */
+  .phone {
+    inline-size: 390px; background: var(--gw-bg-page);
+    border: 1px solid var(--gw-border-default); border-radius: 34px;
+    padding: 14px 20px 20px; display: grid; gap: 18px;
+    box-shadow: var(--gw-shadow-lg);
+  }
+  .greet h1 { font: 800 24px/30px var(--gw-font-ui); letter-spacing: -.015em; margin: 0 0 2px; }
+  .greet p { font: 400 15px/22px var(--gw-font-ui); color: var(--gw-text-muted); margin: 0; }
+
+  .hero {
+    position: relative; border-radius: 28px; padding: 18px;
+    background: var(--gw-gradient-primary); color: #fff;
+    box-shadow: var(--gw-shadow-primary); display: grid; gap: 15px;
+  }
+  .hero .kicker { font: 700 11px/14px var(--gw-font-ui); letter-spacing: .04em; text-transform: uppercase; opacity: .72; }
+  .hero h2 { font: 700 20px/26px var(--gw-font-ui); margin: 3px 0 0; }
+  .hero .prog { display: flex; align-items: center; justify-content: space-between; }
+  .hero .prog span { font: 600 13px/18px var(--gw-font-ui); opacity: .88; }
+  .hero .pct { font-family: var(--gw-font-brand); font-weight: 600; font-size: 26px; line-height: 28px; }
+  .track { block-size: 10px; border-radius: var(--gw-radius-full); background: rgba(255,255,255,.26); overflow: hidden; }
+  .track i { display: block; block-size: 100%; inline-size: 80%; border-radius: inherit; background: #fff; }
+  .stats { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; border-radius: 18px; background: rgba(255,255,255,.16); }
+  .stats div { display: grid; gap: 1px; }
+  .stats small { font: 500 12px/16px var(--gw-font-ui); opacity: .72; }
+  .stats strong { font: 700 14px/18px var(--gw-font-ui); }
+  .stats hr { inline-size: 1px; block-size: 26px; border: 0; background: rgba(255,255,255,.28); margin: 0; }
+
+  .sec-head { display: flex; align-items: center; justify-content: space-between; }
+  .sec-head h3 { font: 700 17px/24px var(--gw-font-ui); margin: 0; }
+  .sec-head a { font: 600 13px/18px var(--gw-font-ui); color: var(--gw-primary-base); text-decoration: none; }
+
+  .row {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 11px;
+    border-radius: 20px; background: var(--gw-bg-surface);
+    border: 1px solid var(--gw-border-subtle); box-shadow: var(--gw-shadow-xs);
+  }
+  .tile { inline-size: 44px; block-size: 44px; border-radius: 14px; background: var(--gw-primary-soft); display: grid; place-items: center; color: var(--gw-primary-base); font: 700 11px/1 var(--gw-font-ui); }
+  .row .info { flex: 1; display: grid; gap: 2px; }
+  .row .info b { font: 600 16px/22px var(--gw-font-ui); }
+  .row .info small { font: 500 12px/16px var(--gw-font-ui); color: var(--gw-text-subtle); }
+  .badge { font: 700 11px/14px var(--gw-font-ui); letter-spacing: .04em; text-transform: uppercase; padding: 5px 9px; border-radius: var(--gw-radius-full); }
+  .badge.ok { background: var(--gw-success-soft); color: var(--gw-success-base); }
+  .badge.neutral { background: var(--gw-bg-neutral); color: var(--gw-text-muted); }
+
+  .spot { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 16px 14px 14px; border-radius: 24px; background: var(--gw-accent-pink-soft); border: 1px solid var(--gw-border-primary); }
+  .spot .info { display: grid; gap: 3px; }
+  .spot b { font: 600 16px/22px var(--gw-font-ui); }
+  .spot p { margin: 0; font: 400 13px/19px var(--gw-font-ui); color: var(--gw-text-muted); }
+  .spot a { font: 600 13px/18px var(--gw-font-ui); color: var(--gw-primary-base); text-decoration: none; }
+
+  .nav { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 14px 0; border-radius: 28px 28px 0 0; background: var(--gw-bg-surface); box-shadow: var(--gw-shadow-nav); margin: 6px -20px -20px; }
+  .nav a { flex: 1; display: grid; justify-items: center; gap: 3px; padding-bottom: 14px; text-decoration: none; color: var(--gw-text-subtle); font: 600 10px/13px var(--gw-font-ui); }
+  .nav a .pill { inline-size: 46px; block-size: 28px; border-radius: var(--gw-radius-full); display: grid; place-items: center; }
+  .nav a[aria-current] { color: var(--gw-primary-base); }
+  .nav a[aria-current] .pill { background: var(--gw-primary-soft); }
+  .nav svg { inline-size: 21px; block-size: 21px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* --- tokens --- */
+  .panel { border-radius: 26px; background: var(--gw-bg-surface); border: 1px solid var(--gw-border-subtle); padding: 22px; display: grid; gap: 16px; box-shadow: var(--gw-shadow-xs); }
+  .panel h3 { font: 700 17px/24px var(--gw-font-ui); margin: 0; }
+  .panel p { margin: 0; font: 400 14px/21px var(--gw-font-ui); color: var(--gw-text-muted); }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+  .sw figure { margin: 0; display: grid; gap: 6px; }
+  .sw i { block-size: 46px; border-radius: 14px; border: 1px solid var(--gw-border-default); display: block; }
+  .sw figcaption { font: 500 12px/16px var(--gw-font-ui); color: var(--gw-text-subtle); }
+  code { font: 500 12px/18px ui-monospace, monospace; background: var(--gw-bg-neutral); padding: 2px 6px; border-radius: 6px; color: var(--gw-text-primary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.6v6.6"/><path d="M10.1 6.9A4.6 4.6 0 0 0 3.9 13.1L12 21.2"/><path d="M13.9 6.9A4.6 4.6 0 0 1 20.1 13.1L12 21.2"/>
+        </svg>
+      </span>
+      <span class="word">Gabie <b>World</b></span>
+    </div>
+
+    <div class="toggle" role="group" aria-label="Tema">
+      <button type="button" data-theme-set="light" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        Claro
+      </button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M12 3.2a6.4 6.4 0 0 0 8.8 8.8 9 9 0 1 1-8.8-8.8Z"/></svg>
+        Escuro
+      </button>
+    </div>
+  </header>
+
+  <div class="cols">
+    <section class="phone" aria-label="Home mobile">
+      <div class="greet">
+        <h1>Oi, Gabie! 🌸</h1>
+        <p>Faltam 3 peças pro seu setup ficar pronto.</p>
+      </div>
+
+      <div class="hero">
+        <picture class="gw-cat gw-cat--peek" style="--gw-cat-size:64px">
+          <source srcset="../data/cats/webp/cat-happy@256.webp" type="image/webp">
+          <img src="../data/cats/png/cat-happy@256.png" width="64" height="64" alt="" aria-hidden="true">
+        </picture>
+        <div>
+          <div class="kicker">Build principal</div>
+          <h2>Setup Rosa Cereja</h2>
+        </div>
+        <div>
+          <div class="prog"><span>12 de 15 peças</span><span class="pct">80%</span></div>
+          <div class="track" style="margin-top:9px"><i></i></div>
+        </div>
+        <div class="stats">
+          <div><small>Gasto</small><strong>R$ 5.120</strong></div><hr>
+          <div><small>Restante</small><strong>R$ 3.280</strong></div><hr>
+          <div><small>Orçamento</small><strong>R$ 8.400</strong></div>
+        </div>
+      </div>
+
+      <div class="sec-head"><h3>Próximas peças</h3><a href="#">Ver tudo</a></div>
+
+      <div class="row">
+        <span class="tile">GPU</span>
+        <span class="info"><b>RTX 4060 Ti</b><small>Placa de vídeo &middot; alvo R$ 2.400</small></span>
+        <span class="badge ok">no alvo</span>
+      </div>
+      <div class="row">
+        <span class="tile">CASE</span>
+        <span class="info"><b>Lian Li A3 mATX</b><small>Gabinete &middot; alvo R$ 540</small></span>
+        <span class="badge neutral">planejado</span>
+      </div>
+
+      <div class="spot">
+        <picture class="gw-cat" style="--gw-cat-size:66px">
+          <source srcset="../data/cats/webp/cat-ecstatic@256.webp" type="image/webp">
+          <img src="../data/cats/png/cat-ecstatic@256.png" width="66" height="66" alt="" aria-hidden="true">
+        </picture>
+        <span class="info">
+          <b>Preço alvo atingido! 🎉</b>
+          <p>A RTX 4060 Ti caiu pra R$ 2.279 na Kabum.</p>
+          <a href="#">Ver oferta &rsaquo;</a>
+        </span>
+      </div>
+
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="#" aria-current="page"><span class="pill"><svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span>Início</a>
+        <a href="#"><span class="pill"><svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span>Favoritos</a>
+        <a href="#"><span class="pill"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>Adicionar</a>
+        <a href="#"><span class="pill"><svg viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></span>Avisos</a>
+        <a href="#"><span class="pill"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Perfil</a>
+      </nav>
+    </section>
+
+    <div style="display:grid;gap:20px">
+      <section class="panel">
+        <h3>Como o tema funciona</h3>
+        <p>O botão acima escreve <code>data-theme</code> no <code>&lt;html&gt;</code>. Sem escolha salva, o site segue o <code>prefers-color-scheme</code> do sistema — é o mesmo comportamento do switch “Seguir o sistema” da tela 17 · Perfil.</p>
+        <p>Nenhum componente repete cor: tudo lê variável CSS de <code>tokens.css</code>, gerada a partir dos modos Light/Dark do Figma.</p>
+        <p id="state" style="color:var(--gw-primary-base);font-weight:600"></p>
+      </section>
+
+      <section class="panel">
+        <h3>Tokens trocando junto</h3>
+        <div class="sw">
+          <figure><i style="background:var(--gw-bg-page)"></i><figcaption>bg/page</figcaption></figure>
+          <figure><i style="background:var(--gw-bg-surface)"></i><figcaption>bg/surface</figcaption></figure>
+          <figure><i style="background:var(--gw-bg-surface-alt)"></i><figcaption>bg/surface-alt</figcaption></figure>
+          <figure><i style="background:var(--gw-bg-neutral)"></i><figcaption>bg/neutral</figcaption></figure>
+          <figure><i style="background:var(--gw-primary-base)"></i><figcaption>primary/base</figcaption></figure>
+          <figure><i style="background:var(--gw-primary-soft)"></i><figcaption>primary/soft</figcaption></figure>
+          <figure><i style="background:var(--gw-accent-pink)"></i><figcaption>accent/pink</figcaption></figure>
+          <figure><i style="background:var(--gw-success-base)"></i><figcaption>success/base</figcaption></figure>
+          <figure><i style="background:var(--gw-warning-base)"></i><figcaption>warning/base</figcaption></figure>
+          <figure><i style="background:var(--gw-danger-base)"></i><figcaption>danger/base</figcaption></figure>
+          <figure><i style="background:var(--gw-text-primary)"></i><figcaption>text/primary</figcaption></figure>
+          <figure><i style="background:var(--gw-border-default)"></i><figcaption>border/default</figcaption></figure>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  var KEY = 'gw-theme';
+  var mql = matchMedia('(prefers-color-scheme: dark)');
+
+  function pref() {
+    try { var v = localStorage.getItem(KEY); return (v === 'light' || v === 'dark') ? v : 'system'; }
+    catch (e) { return 'system'; }
+  }
+  function current() {
+    var p = pref();
+    return p !== 'system' ? p : (mql.matches ? 'dark' : 'light');
+  }
+  function paint() {
+    var t = current();
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.themeSet === t));
+    });
+    document.getElementById('state').textContent =
+      'Agora: tema ' + (t === 'dark' ? 'escuro' : 'claro') +
+      (pref() === 'system' ? ' (seguindo o sistema)' : ' (escolha fixada)');
+  }
+  document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      try { localStorage.setItem(KEY, b.dataset.themeSet); } catch (e) {}
+      paint();
+    });
+  });
+  mql.addEventListener('change', function () { if (pref() === 'system') paint(); });
+  paint();
+</script>
+</body>
+</html>

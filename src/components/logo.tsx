@@ -1,0 +1,1 @@
+import Image from"next/image";export function Logo(){return <div className="flex items-center gap-2.5"><span className="grid size-10 place-items-center rounded-[13px] bg-[var(--primary)]"><Image src="/logo.svg" width={24} height={24} alt=""/></span><span className="brand text-xl font-semibold">Gabie <b className="text-[var(--primary)]">World</b></span></div>}

@@ -1,0 +1,1 @@
+"use client";import{initialState,type State}from"./types";const KEY="gabie-world:v1";export function loadState():State{try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):structuredClone(initialState)}catch{return structuredClone(initialState)}}export function saveState(state:State){localStorage.setItem(KEY,JSON.stringify(state))}

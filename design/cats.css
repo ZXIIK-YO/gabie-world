@@ -1,0 +1,54 @@
+/* Gabie World — bolha do gato
+   O recorte circular com anel claro é o que mantém 13 fotos diferentes
+   coerentes entre si e com o resto da interface. */
+
+.gw-cat {
+  display: inline-block;
+  inline-size: var(--gw-cat-size, 64px);
+  block-size: var(--gw-cat-size, 64px);
+  border-radius: var(--gw-radius-full);
+  overflow: hidden;
+  /* o anel usa bg/surface: fica branco no claro e grafite no escuro */
+  box-shadow: 0 0 0 4px var(--gw-bg-surface), var(--gw-shadow-cat);
+  flex: none;
+}
+
+.gw-cat img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Entrada em momentos de emoção: curto, elástico, uma vez só. */
+@keyframes gw-cat-pop {
+  from { transform: scale(0.8) rotate(-9deg); opacity: 0; }
+  to   { transform: scale(1)   rotate(-9deg); opacity: 1; }
+}
+
+.gw-cat--pop {
+  animation: gw-cat-pop var(--gw-dur-base) var(--gw-ease-spring) both;
+}
+
+/* Gato espiando a quina de um card. O pai precisa de position: relative. */
+.gw-cat--peek {
+  position: absolute;
+  inset-block-start: calc(var(--gw-cat-size, 64px) * -0.4);
+  inset-inline-end: var(--gw-space-4);
+  transform: rotate(-9deg);
+}
+
+/* Empty state: flutuação lenta, quase imperceptível. */
+@keyframes gw-cat-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+.gw-cat--float {
+  animation: gw-cat-float 3s var(--gw-ease-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-cat--pop,
+  .gw-cat--float { animation: none; }
+}

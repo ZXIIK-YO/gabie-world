@@ -1,0 +1,192 @@
+/* Gabie World — design tokens
+   Gerado a partir do Figma: https://www.figma.com/design/3dBKZg4AyDQO8w0KSO1Cra
+   Tema: <html data-theme="light|dark">. Sem o atributo, segue prefers-color-scheme. */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* cores — tema claro */
+  --gw-bg-page: #FFF9FB;
+  --gw-bg-surface: #FFFFFF;
+  --gw-bg-surface-alt: #FFF1F5;
+  --gw-bg-soft-pink: #FCE7F3;
+  --gw-bg-neutral: #F4F4F5;
+  --gw-bg-inverse: #18181B;
+  --gw-border-subtle: #FCE7F3;
+  --gw-border-default: #E9E4E7;
+  --gw-border-strong: #D4D4D8;
+  --gw-border-primary: #FDA4AF;
+  --gw-text-primary: #18181B;
+  --gw-text-muted: #71717A;
+  --gw-text-subtle: #A1A1AA;
+  --gw-text-on-primary: #FFFFFF;
+  --gw-text-inverse: #FAFAFA;
+  --gw-primary-base: #E11D48;
+  --gw-primary-hover: #BE123C;
+  --gw-primary-pressed: #9F1239;
+  --gw-primary-soft: #FFE4E6;
+  --gw-primary-soft-hover: #FECDD3;
+  --gw-accent-pink: #F472B6;
+  --gw-accent-pink-soft: #FCE7F3;
+  --gw-success-base: #0EA47A;
+  --gw-success-soft: #D9F7EC;
+  --gw-warning-base: #D97706;
+  --gw-warning-soft: #FEF3C7;
+  --gw-danger-base: #BE123C;
+  --gw-danger-soft: #FFE4E6;
+  --gw-info-base: #6366F1;
+  --gw-info-soft: #E8EAFF;
+  --gw-overlay-scrim: #18181B;
+
+  /* gradiente da marca (igual nos dois temas) */
+  --gw-gradient-primary: linear-gradient(135deg, #9F1239 0%, #E11D48 55%, #F4628A 100%);
+
+  /* espaçamento */
+  --gw-space-1: 4px;
+  --gw-space-2: 8px;
+  --gw-space-3: 12px;
+  --gw-space-4: 16px;
+  --gw-space-5: 20px;
+  --gw-space-6: 24px;
+  --gw-space-8: 32px;
+  --gw-space-10: 40px;
+  --gw-space-12: 48px;
+
+  /* raio */
+  --gw-radius-sm: 10px;
+  --gw-radius-md: 14px;
+  --gw-radius-lg: 18px;
+  --gw-radius-xl: 24px;
+  --gw-radius-2xl: 32px;
+  --gw-radius-full: 999px;
+
+  /* elevação */
+  --gw-shadow-xs: 0 1px 2px rgba(159,18,57,.05);
+  --gw-shadow-sm: 0 2px 8px rgba(159,18,57,.07), 0 1px 2px rgba(24,24,27,.03);
+  --gw-shadow-md: 0 8px 24px -2px rgba(159,18,57,.09), 0 2px 6px rgba(24,24,27,.04);
+  --gw-shadow-lg: 0 18px 44px -6px rgba(159,18,57,.14), 0 4px 10px rgba(24,24,27,.05);
+  --gw-shadow-primary: 0 8px 20px -3px rgba(225,29,72,.30);
+  --gw-shadow-nav: 0 -6px 24px -4px rgba(159,18,57,.08);
+  --gw-shadow-cat: 0 10px 22px -4px rgba(244,114,182,.28);
+
+  /* tipografia */
+  --gw-font-ui: 'Nunito', ui-rounded, system-ui, sans-serif;
+  --gw-font-brand: 'Fredoka', 'Nunito', system-ui, sans-serif;
+
+  /* motion */
+  --gw-ease-out: cubic-bezier(.2,.8,.3,1);
+  --gw-ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --gw-dur-fast: 120ms;
+  --gw-dur-base: 260ms;
+  --gw-dur-slow: 420ms;
+}
+
+/* tema escuro explícito (o toggle escreve data-theme no <html>) */
+[data-theme='dark'] {
+  --gw-bg-page: #09090B;
+  --gw-bg-surface: #18181B;
+  --gw-bg-surface-alt: #1F1F26;
+  --gw-bg-soft-pink: #2A1520;
+  --gw-bg-neutral: #27272A;
+  --gw-bg-inverse: #FAFAFA;
+  --gw-border-subtle: #27272A;
+  --gw-border-default: #3F3F46;
+  --gw-border-strong: #52525B;
+  --gw-border-primary: #9F1239;
+  --gw-text-primary: #FAFAFA;
+  --gw-text-muted: #A1A1AA;
+  --gw-text-subtle: #71717A;
+  --gw-text-on-primary: #4C0519;
+  --gw-text-inverse: #18181B;
+  --gw-primary-base: #FB7185;
+  --gw-primary-hover: #FDA4AF;
+  --gw-primary-pressed: #F43F5E;
+  --gw-primary-soft: #4C0519;
+  --gw-primary-soft-hover: #631224;
+  --gw-accent-pink: #F472B6;
+  --gw-accent-pink-soft: #3B1526;
+  --gw-success-base: #34D399;
+  --gw-success-soft: #052E23;
+  --gw-warning-base: #FBBF24;
+  --gw-warning-soft: #3A2408;
+  --gw-danger-base: #FB7185;
+  --gw-danger-soft: #4C0519;
+  --gw-info-base: #A5B4FC;
+  --gw-info-soft: #1E1B4B;
+  --gw-overlay-scrim: #000000;
+}
+
+/* tema escuro automático quando o usuário não escolheu nada */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --gw-bg-page: #09090B;
+    --gw-bg-surface: #18181B;
+    --gw-bg-surface-alt: #1F1F26;
+    --gw-bg-soft-pink: #2A1520;
+    --gw-bg-neutral: #27272A;
+    --gw-bg-inverse: #FAFAFA;
+    --gw-border-subtle: #27272A;
+    --gw-border-default: #3F3F46;
+    --gw-border-strong: #52525B;
+    --gw-border-primary: #9F1239;
+    --gw-text-primary: #FAFAFA;
+    --gw-text-muted: #A1A1AA;
+    --gw-text-subtle: #71717A;
+    --gw-text-on-primary: #4C0519;
+    --gw-text-inverse: #18181B;
+    --gw-primary-base: #FB7185;
+    --gw-primary-hover: #FDA4AF;
+    --gw-primary-pressed: #F43F5E;
+    --gw-primary-soft: #4C0519;
+    --gw-primary-soft-hover: #631224;
+    --gw-accent-pink: #F472B6;
+    --gw-accent-pink-soft: #3B1526;
+    --gw-success-base: #34D399;
+    --gw-success-soft: #052E23;
+    --gw-warning-base: #FBBF24;
+    --gw-warning-soft: #3A2408;
+    --gw-danger-base: #FB7185;
+    --gw-danger-soft: #4C0519;
+    --gw-info-base: #A5B4FC;
+    --gw-info-soft: #1E1B4B;
+    --gw-overlay-scrim: #000000;
+  }
+}
+
+/* classes utilitárias de tipografia */
+.gw-brand-wordmark { font-family: var(--gw-font-brand); font-weight: 600; font-size: 28px; line-height: 32px; letter-spacing: -0.02em; }
+.gw-brand-number { font-family: var(--gw-font-brand); font-weight: 600; font-size: 44px; line-height: 48px; letter-spacing: -0.02em; }
+.gw-display-xl { font-family: var(--gw-font-ui); font-weight: 800; font-size: 32px; line-height: 38px; letter-spacing: -0.02em; }
+.gw-heading-lg { font-family: var(--gw-font-ui); font-weight: 800; font-size: 24px; line-height: 30px; letter-spacing: -0.015em; }
+.gw-heading-md { font-family: var(--gw-font-ui); font-weight: 700; font-size: 20px; line-height: 26px; letter-spacing: -0.01em; }
+.gw-heading-sm { font-family: var(--gw-font-ui); font-weight: 700; font-size: 17px; line-height: 24px; letter-spacing: -0.005em; }
+.gw-title-md { font-family: var(--gw-font-ui); font-weight: 600; font-size: 16px; line-height: 22px; letter-spacing: -0.002em; }
+.gw-title-sm { font-family: var(--gw-font-ui); font-weight: 600; font-size: 14px; line-height: 20px; letter-spacing: 0; }
+.gw-body-lg { font-family: var(--gw-font-ui); font-weight: 400; font-size: 16px; line-height: 24px; letter-spacing: 0; }
+.gw-body-md { font-family: var(--gw-font-ui); font-weight: 400; font-size: 15px; line-height: 22px; letter-spacing: 0; }
+.gw-body-sm { font-family: var(--gw-font-ui); font-weight: 400; font-size: 13px; line-height: 19px; letter-spacing: 0; }
+.gw-label-lg { font-family: var(--gw-font-ui); font-weight: 600; font-size: 15px; line-height: 20px; letter-spacing: 0; }
+.gw-label-md { font-family: var(--gw-font-ui); font-weight: 600; font-size: 13px; line-height: 18px; letter-spacing: 0; }
+.gw-label-sm { font-family: var(--gw-font-ui); font-weight: 700; font-size: 11px; line-height: 14px; letter-spacing: 0.04em; }
+.gw-caption { font-family: var(--gw-font-ui); font-weight: 500; font-size: 12px; line-height: 16px; letter-spacing: 0; }
+.gw-price-lg { font-family: var(--gw-font-ui); font-weight: 800; font-size: 24px; line-height: 28px; letter-spacing: -0.01em; }
+.gw-price-md { font-family: var(--gw-font-ui); font-weight: 800; font-size: 18px; line-height: 22px; letter-spacing: -0.005em; }
+.gw-price-sm { font-family: var(--gw-font-ui); font-weight: 700; font-size: 14px; line-height: 18px; letter-spacing: 0; }
+.gw-nav-label { font-family: var(--gw-font-ui); font-weight: 600; font-size: 10px; line-height: 13px; letter-spacing: 0; }
+
+/* base */
+html { color-scheme: light dark; }
+body {
+  margin: 0;
+  background: var(--gw-bg-page);
+  color: var(--gw-text-primary);
+  font-family: var(--gw-font-ui);
+  font-size: 15px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* a troca de tema não deve animar tudo na tela */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
