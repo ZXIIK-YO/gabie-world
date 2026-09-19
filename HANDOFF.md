@@ -15,23 +15,20 @@ Atualizado em 19/09/2026. Não há segredos neste arquivo.
 
 Os dois envolvem criar/colar credenciais, então precisam ser feitos por você.
 
-### 1. `GEMINI_API_KEY` não existe na Vercel
+### 1. `GEMINI_API_KEY` — chave criada, aguardando entrar em vigor
 
-Confirmado pela própria API em produção:
+Chave criada no AI Studio (projeto gratuito, sem faturamento) e adicionada na Vercel em 19/09/2026.
+A produção continuou respondendo `missing-key` logo depois: variável nova só vale em **deploy novo**,
+a Vercel não injeta em deploy que já existe.
 
-```
-GET https://www.gabie.space/api/prices?q=RTX%204060%20Ti
-"sources":[{"name":"gemini-google-search","ok":false,"reason":"missing-key"}, ...]
-```
+Se persistir `missing-key` depois de um deploy novo, confira nesta ordem:
 
-Passos:
+1. A variável está no ambiente **Production**, não só Preview/Development.
+2. O nome é exatamente `GEMINI_API_KEY` (`src/app/api/prices/route.ts:89`), sem espaço sobrando.
+3. O valor não tem espaço nem quebra de linha no início/fim.
 
-1. Abra https://aistudio.google.com/u/1/api-keys e crie uma chave `Gabie World Search` (projeto gratuito serve).
-2. Vercel → projeto `gabie-world` → Settings → Environment Variables → `GEMINI_API_KEY`, marcada como **Sensitive**, ambiente **Production** apenas.
-3. Redeploy.
-4. Teste: `https://www.gabie.space/api/prices?q=RTX%204060%20Ti` deve responder `"source":"gemini-google-search"` com ofertas reais.
-
-Se o Google repetir "The request is suspicious": tente em janela normal (não anônima), com uma só conta Google logada, e use um projeto **já existente** em vez de criar um novo.
+Teste: `https://www.gabie.space/api/prices?q=RTX%204060%20Ti` deve responder `"source":"gemini-google-search"`
+com ofertas reais. A resposta traz `sources` com o motivo de cada fonte, e a chave nunca é ecoada.
 
 ### 2. Provider Google desligado no Supabase
 
