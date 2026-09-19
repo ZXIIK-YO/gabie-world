@@ -85,6 +85,25 @@ function rank(query: string, rows: z.infer<typeof resultSchema>[]): Result[] {
   return (relevant.length > 0 ? relevant : scored).slice(0, 8);
 }
 
+/**
+ * Google buries the useful part — which quota ran out, which model went away —
+ * inside a nested error envelope. Pulling it up front makes the `sources` field
+ * enough to diagnose a failure from one HTTP call, without echoing the key.
+ */
+async function describeError(response: Response) {
+  const raw = (await response.text().catch(() => "")).replace(/\s+/g, " ");
+  let out = raw;
+  try {
+    const body = JSON.parse(raw) as { error?: { message?: string; details?: Array<{ violations?: Array<{ quotaId?: string; quotaValue?: string }> }> } };
+    const violations = body.error?.details?.flatMap((entry) => entry.violations ?? []) ?? [];
+    const quota = violations.map((v) => [v.quotaId, v.quotaValue].filter(Boolean).join("=")).filter(Boolean).join(", ");
+    out = `${body.error?.message ?? raw}${quota ? ` [${quota}]` : ""}`;
+  } catch {
+    // Not JSON (HTML error page, proxy blurb) — the raw text is the best we have.
+  }
+  return out.replace(/key=[^&\s]+/gi, "key=***").slice(0, 260);
+}
+
 const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 function callGemini(model: string, key: string, prompt: string) {
@@ -126,8 +145,7 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
     }
 
     if (!response.ok) {
-      const detail = (await response.text().catch(() => "")).slice(0, 200);
-      return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-${response.status}${detail ? ` ${detail.replace(/\s+/g, " ")}` : ""}` } };
+      return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-${response.status} ${await describeError(response)}` } };
     }
 
     const payload = (await response.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
