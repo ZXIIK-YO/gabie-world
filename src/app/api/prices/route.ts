@@ -78,13 +78,30 @@ function extractJson(text: string): unknown {
   try { return JSON.parse(candidate.slice(start, end + 1)); } catch { return null; }
 }
 
+/**
+ * Model numbers are the whole identity of a PC part: a 4060 Ti and a 5060 Ti
+ * share every other word in the title. Treating "4060" as just another token
+ * is how a search for one returns the other.
+ */
+const modelTokens = (value: string) => words(value).filter((word) => /\d{3,}/.test(word));
+
 function rank(query: string, rows: z.infer<typeof resultSchema>[]): Result[] {
-  const scored = rows.map((item) => ({ ...item, match: score(query, item.title) })).sort((a, b) => b.match - a.match || a.price - b.price);
+  const wanted = modelTokens(query);
+  const onModel = wanted.length === 0
+    ? rows
+    : rows.filter((row) => { const have = new Set(words(row.title)); return wanted.every((token) => have.has(token)); });
+
+  // Nothing carrying the right model number means the shop does not have this
+  // part. Say so, rather than offering a different card at a tempting price.
+  if (wanted.length > 0 && onModel.length === 0) return [];
+
+  const scored = onModel.map((item) => ({ ...item, match: score(query, item.title) })).sort((a, b) => b.match - a.match || a.price - b.price);
   const relevant = scored.filter((item) => item.match >= 0.35);
-  // The model sometimes paraphrases titles. Rather than answering "nothing found",
-  // fall back to the best-scoring rows so the user still sees real offers.
+  // Titles get paraphrased, so fall back to the best scoring rows rather than
+  // answering "nothing found" when the model number already matched.
   return (relevant.length > 0 ? relevant : scored).slice(0, 8);
 }
+
 
 /**
  * Google buries the useful part — which quota ran out, which model went away —
