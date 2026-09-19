@@ -11,23 +11,38 @@ Atualizado em 19/09/2026. Não há segredos neste arquivo.
 - Worker `gabie-world-classifier` publicado, com segredo Bearer na Vercel.
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` **já estão** em Production (confirmado: o botão "Entrar com Google" aparece habilitado na produção).
 
-## Credenciais: resolvidas
+## Busca de preços: por que não é Google
 
-Nada aqui exige mais ação manual. Registro do que ficou configurado:
+Os dois caminhos do Google estão fechados no plano gratuito, e isso foi provado, não suposto:
 
-- `GEMINI_API_KEY` existe em Production na Vercel. **Pendência real:** a chave responde
-  `429 quota exceeded` sem `quotaId`, mesmo com poucas chamadas — provável allowance zero
-  para `gemini-3.5-flash-lite` **com grounding do Google Search** no tier gratuito.
-  Investigar em https://ai.dev/rate-limit (projeto `781176747769`) ou testar sem grounding.
-- Login Google: **funcionando em produção, verificado de ponta a ponta.**
-  - Cliente OAuth "Gabie World" no projeto `gen-lang-client-0835684316` (Gemini API).
-  - Redirect URI: `https://fweudhjkwrcoqvjvhwes.supabase.co/auth/v1/callback`
-  - Tela de consentimento renomeada de "n8n-Synesis" para "Gabie World" (autorizado pelo dono;
-    o n8n não é mais usado). Status **Em produção**, limite de 100 usuários por não ser verificado.
-  - Supabase: provider Google habilitado, Site URL `https://www.gabie.space`, 4 redirect URLs
-    (produção com e sem www, localhost 3000 e 3100, todas com `/**`).
+- **Grounding do Gemini é pago.** Os três modelos (`gemini-3.5-flash-lite`, `2.5-flash`, `2.0-flash`)
+  respondem 429 numa chamada com `google_search`, enquanto o *mesmo* modelo sem a ferramenta
+  responde 200. A rota faz essa sonda sozinha e reporta `probe: model-ok-grounding-capped`.
+  A chave tinha ~10 chamadas na vida, então não é cota diária esgotada: é allowance zero.
+- **Custom Search JSON API nega acesso.** `403 PERMISSION_DENIED — "This project does not have
+  the access to Custom Search JSON API"` em **dois** projetos diferentes, um deles criado do zero
+  (`gabie-world-search`), com a API mostrando "Ativado" e cota "Queries per day: 100" provisionada,
+  e com a chave criada dentro do projeto e restrita à API certa. O mesmo mecanismo de busca
+  (`cx=146605be22f804a39`) **funciona** pelo widget em `cse.google.com`. Ou seja: o acesso à API
+  JSON é que não está sendo concedido. Não adianta reconfigurar.
 
-Nunca cole chaves em commit, issue, chat público ou neste arquivo.
+**Solução em produção: catálogo público do KaBuM.** Sem chave, sem cota. Traz o preço realmente
+cobrado (o catálogo tem até três preços; vale o da oferta ativa), frete grátis, open box,
+marketplace, estoque e link canônico do produto. É uma loja só — a UI mostra "KaBuM!" em cada
+oferta, sem fingir que varreu o mercado.
+
+Testado com UA de navegador: Terabyte, Pichau e Magalu respondem 403; Mercado Livre redireciona;
+Amazon devolve só HTML. KaBuM foi a única com API aberta.
+
+Gemini e Programmable Search seguem **antes** do KaBuM na cadeia e voltam a funcionar sozinhos se
+as cotas aparecerem. Para cobertura multi-loja de verdade, a opção seria a Brave Search API
+(~2.000 buscas/mês grátis) — não avaliada a fundo, e pode exigir cartão só para verificação.
+
+### Números de modelo são obrigatórios
+
+Buscar "RTX 4060 Ti" trazia 3060 Ti e 5060 Ti: o número era pontuado como palavra comum e um
+fallback garantia que algo sempre aparecesse. Agora todo token de 3+ dígitos da busca precisa
+existir no título; se nada sobra, a resposta é lista vazia. O KaBuM de fato não estoca 4060 Ti.
 
 ## O que foi feito nesta rodada
 
@@ -67,22 +82,20 @@ Corrigido:
 
 ## Ainda falta
 
-1. **Cota do Gemini.** A busca de preços não retorna ofertas: 429 em toda chamada.
-   Sem isso, o botão "Usar" numa oferta (que registra a compra na peça) nunca foi exercitado.
-2. **Compartilhamento e permissões de colaborador.** O schema tem `shared_builds` + view
-   `public_shared_builds`, mas **não existe** tabela de colaborador nem policy para acesso
-   compartilhado. Precisa de migration nova (ex.: `build_collaborators(build_id,user_id,role)`)
-   e ajuste das policies de `builds`/`build_items`, que hoje só permitem o dono.
-3. **Admin e promoção de `SUPER_ADMIN`.** O enum `app_role` existe, mas nenhuma policy usa.
-   `profiles` hoje só deixa a pessoa ler a si mesma, então um admin não enxerga ninguém.
-   **Atenção — furo conhecido:** a policy `profiles_update_self` permite `update` em qualquer
-   coluna, inclusive `role`. Hoje qualquer usuário logado pode se promover a `SUPER_ADMIN`
-   pelo cliente. Corrigir com `revoke update (role) on public.profiles from authenticated`
-   antes de qualquer policy passar a confiar nesse campo.
-4. **Rota `/api/prices` persistindo histórico** em `price_checks`/`price_results`
-   (as tabelas existem e continuam vazias).
-5. **Cache e rate limit compartilhados.** Os atuais são por instância serverless.
-6. **Testes E2E** do resto das jornadas e responsividade.
+1. **Furo de privilégio.** `profiles_update_self` permite `update` em qualquer coluna, inclusive
+   `role`: qualquer usuário logado se promove a `SUPER_ADMIN` pelo cliente. Corrigir com
+   `revoke update (role) on public.profiles from authenticated;` antes de qualquer policy
+   passar a confiar nesse campo. Não aplicado — é banco de produção e não foi pedido.
+2. **Compartilhamento e colaboradores.** Existe `shared_builds` + view, mas nenhuma tabela de
+   colaborador e nenhuma policy de acesso compartilhado. Precisa de migration
+   (ex.: `build_collaborators(build_id,user_id,role)`) e reescrita das policies de
+   `builds`/`build_items`, hoje só-dono.
+3. **Painel admin.** O enum `app_role` existe e nenhuma policy usa. `profiles` só deixa a pessoa
+   ler a si mesma, então um admin não enxerga ninguém. Promoção deve ser função `security definer`
+   com allowlist, nunca update direto do cliente.
+4. **Cache e rate limit compartilhados.** Hoje são memória por instância serverless: somem a cada
+   deploy e não são compartilhados entre regiões.
+5. **Testes E2E** das jornadas que sobraram e da responsividade em telas intermediárias.
 
 ## Verificações feitas
 
