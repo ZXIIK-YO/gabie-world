@@ -290,6 +290,61 @@ async function searchWithCse(query: string): Promise<{ results: Result[]; report
   }
 }
 
+type KabumItem = {
+  id?: string;
+  attributes?: {
+    title?: string;
+    price?: number;
+    price_with_discount?: number;
+    offer?: { price_with_discount?: number } | null;
+    has_free_shipping?: boolean;
+    available?: boolean;
+    is_openbox?: boolean;
+    is_marketplace?: boolean;
+    product_link?: string;
+  };
+};
+
+/**
+ * KaBuM publishes the catalogue its own storefront reads, with no key and no
+ * quota. It is one shop rather than the whole market, but the data beats
+ * anything scraped from a search snippet: real stock, real discount, real link.
+ */
+async function searchKabum(query: string): Promise<{ results: Result[]; report: SourceReport }> {
+  const name = "kabum";
+  try {
+    const url = `https://servicespub.prod.api.aws.grupokabum.com.br/catalog/v2/search?query=${encodeURIComponent(query)}&page_number=1&page_size=24`;
+    const response = await fetchWithTimeout(url, { headers: { "user-agent": "GabieWorld/1.0", accept: "application/json" }, cache: "no-store" }, 10_000);
+    if (!response.ok) return { results: [], report: { name, ok: false, count: 0, reason: `http-${response.status}` } };
+
+    const items = ((await response.json()) as { data?: KabumItem[] }).data ?? [];
+    const results: Result[] = [];
+    for (const item of items) {
+      const a = item.attributes ?? {};
+      if (a.available === false) continue;
+      // Three prices can be present; the offer one is what the shopper pays.
+      const price = Number(a.offer?.price_with_discount || a.price_with_discount || a.price || 0);
+      const title = a.title?.trim() ?? "";
+      const slug = a.product_link ?? "";
+      if (!(price > 0) || !title || !item.id || !slug) continue;
+      results.push({
+        title,
+        store: a.is_marketplace ? "KaBuM! Marketplace" : "KaBuM!",
+        price,
+        condition: a.is_openbox ? "Open box" : "Novo",
+        shipping: a.has_free_shipping ? "Frete grátis" : null,
+        url: `https://www.kabum.com.br/produto/${item.id}/${slug}`,
+        match: score(query, title),
+      });
+    }
+
+    const ranked = rank(query, results);
+    return { results: ranked, report: { name, ok: true, count: ranked.length } };
+  } catch (error) {
+    return { results: [], report: { name, ok: false, count: 0, reason: safeReason(error) } };
+  }
+}
+
 /**
  * Mercado Livre kept as a fallback on purpose, but their public search API has
  * been returning 403 for anonymous callers (every path, including /sites/MLB).
@@ -395,6 +450,12 @@ export async function GET(request: NextRequest) {
   let results = gemini.results;
 
   if (results.length === 0) {
+    const kabum = await searchKabum(query);
+    sources.push(kabum.report);
+    if (kabum.results.length > 0) { source = "kabum"; results = kabum.results; }
+  }
+
+  if (results.length === 0) {
     const cse = await searchWithCse(query);
     sources.push(cse.report);
     if (cse.results.length > 0) { source = "google-cse+gemini"; results = cse.results; }
@@ -407,16 +468,15 @@ export async function GET(request: NextRequest) {
   }
 
   if (results.length === 0) {
-    const geminiMissing = gemini.report.reason === "missing-key";
     const body = {
       query,
       source: "unavailable",
       searchedAt: new Date().toISOString(),
       results: [],
       sources,
-      notice: geminiMissing || sources.some((s) => s.reason === "missing-cse-config")
-        ? "A busca de preços ainda não está totalmente ligada. Estamos configurando."
-        : "Nenhuma oferta encontrada agora. Tenta escrever o modelo de outro jeito?",
+      // KaBuM answers without any configuration, so an empty result really does
+      // mean nobody has this part rather than "somebody forgot to set a key".
+      notice: "Nenhuma oferta encontrada agora. Tenta escrever o modelo de outro jeito?",
     };
     // 200 on purpose: "no offers" is a normal outcome, not a server error.
     return NextResponse.json(body, { headers: { "cache-control": "no-store" } });
