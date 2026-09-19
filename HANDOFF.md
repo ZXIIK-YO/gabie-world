@@ -11,46 +11,23 @@ Atualizado em 19/09/2026. Não há segredos neste arquivo.
 - Worker `gabie-world-classifier` publicado, com segredo Bearer na Vercel.
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` **já estão** em Production (confirmado: o botão "Entrar com Google" aparece habilitado na produção).
 
-## Dois bloqueios, ambos precisam das suas mãos
+## Credenciais: resolvidas
 
-Os dois envolvem criar/colar credenciais, então precisam ser feitos por você.
+Nada aqui exige mais ação manual. Registro do que ficou configurado:
 
-### 1. `GEMINI_API_KEY` — chave criada, aguardando entrar em vigor
+- `GEMINI_API_KEY` existe em Production na Vercel. **Pendência real:** a chave responde
+  `429 quota exceeded` sem `quotaId`, mesmo com poucas chamadas — provável allowance zero
+  para `gemini-3.5-flash-lite` **com grounding do Google Search** no tier gratuito.
+  Investigar em https://ai.dev/rate-limit (projeto `781176747769`) ou testar sem grounding.
+- Login Google: **funcionando em produção, verificado de ponta a ponta.**
+  - Cliente OAuth "Gabie World" no projeto `gen-lang-client-0835684316` (Gemini API).
+  - Redirect URI: `https://fweudhjkwrcoqvjvhwes.supabase.co/auth/v1/callback`
+  - Tela de consentimento renomeada de "n8n-Synesis" para "Gabie World" (autorizado pelo dono;
+    o n8n não é mais usado). Status **Em produção**, limite de 100 usuários por não ser verificado.
+  - Supabase: provider Google habilitado, Site URL `https://www.gabie.space`, 4 redirect URLs
+    (produção com e sem www, localhost 3000 e 3100, todas com `/**`).
 
-Chave criada no AI Studio (projeto gratuito, sem faturamento) e adicionada na Vercel em 19/09/2026.
-A produção continuou respondendo `missing-key` logo depois: variável nova só vale em **deploy novo**,
-a Vercel não injeta em deploy que já existe.
-
-Se persistir `missing-key` depois de um deploy novo, confira nesta ordem:
-
-1. A variável está no ambiente **Production**, não só Preview/Development.
-2. O nome é exatamente `GEMINI_API_KEY` (`src/app/api/prices/route.ts:89`), sem espaço sobrando.
-3. O valor não tem espaço nem quebra de linha no início/fim.
-
-Teste: `https://www.gabie.space/api/prices?q=RTX%204060%20Ti` deve responder `"source":"gemini-google-search"`
-com ofertas reais. A resposta traz `sources` com o motivo de cada fonte, e a chave nunca é ecoada.
-
-### 2. Provider Google desligado no Supabase
-
-Confirmado:
-
-```
-GET https://fweudhjkwrcoqvjvhwes.supabase.co/auth/v1/authorize?provider=google
-{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}
-```
-
-Passos:
-
-1. Google Cloud Console → credenciais OAuth 2.0 (Web application).
-   - Authorized redirect URI: `https://fweudhjkwrcoqvjvhwes.supabase.co/auth/v1/callback`
-2. Supabase → Authentication → Providers → Google → habilitar e colar Client ID/Secret.
-3. Supabase → Authentication → URL Configuration:
-   - Site URL: `https://www.gabie.space`
-   - Redirect URLs: `https://www.gabie.space/auth/callback` e `http://localhost:3000/auth/callback`
-
-Enquanto isso não for feito, **nada do fluxo autenticado pode ser testado** — login, sincronização, migração guest → conta, compartilhamento e admin dependem todos disso.
-
-Nunca cole essas chaves em commit, issue, chat público ou neste arquivo.
+Nunca cole chaves em commit, issue, chat público ou neste arquivo.
 
 ## O que foi feito nesta rodada
 
@@ -90,14 +67,22 @@ Corrigido:
 
 ## Ainda falta
 
-Na ordem, tudo depois do item 1 depende do login Google funcionando:
-
-1. **Habilitar Google no Supabase** (bloqueio acima) e então exercitar de ponta a ponta: login, pull da conta, migração guest → conta, debounce de escrita, logout.
-2. **Compartilhamento e permissões de colaborador.** O schema tem `shared_builds` + view `public_shared_builds`, mas **não existe** tabela de colaborador nem policy para acesso compartilhado. Precisa de migration nova (ex.: `build_collaborators(build_id,user_id,role)`) e ajuste das policies de `builds`/`build_items`, que hoje só permitem o dono.
-3. **Admin e promoção de `SUPER_ADMIN`.** O enum `app_role` existe, mas nenhuma policy usa. `profiles` hoje só deixa a pessoa ler a si mesma, então um admin não enxerga ninguém. Promoção deve ser feita por função `security definer` com allowlist, nunca por update direto do cliente.
-4. **Rota `/api/prices` persistindo histórico** em `price_checks`/`price_results` (as tabelas existem e estão vazias no fluxo atual).
-5. **Cache e rate limit compartilhados.** Os atuais são por instância serverless; com tráfego real, mover para Supabase ou KV.
-6. **Testes E2E das jornadas autenticadas e responsividade.**
+1. **Cota do Gemini.** A busca de preços não retorna ofertas: 429 em toda chamada.
+   Sem isso, o botão "Usar" numa oferta (que registra a compra na peça) nunca foi exercitado.
+2. **Compartilhamento e permissões de colaborador.** O schema tem `shared_builds` + view
+   `public_shared_builds`, mas **não existe** tabela de colaborador nem policy para acesso
+   compartilhado. Precisa de migration nova (ex.: `build_collaborators(build_id,user_id,role)`)
+   e ajuste das policies de `builds`/`build_items`, que hoje só permitem o dono.
+3. **Admin e promoção de `SUPER_ADMIN`.** O enum `app_role` existe, mas nenhuma policy usa.
+   `profiles` hoje só deixa a pessoa ler a si mesma, então um admin não enxerga ninguém.
+   **Atenção — furo conhecido:** a policy `profiles_update_self` permite `update` em qualquer
+   coluna, inclusive `role`. Hoje qualquer usuário logado pode se promover a `SUPER_ADMIN`
+   pelo cliente. Corrigir com `revoke update (role) on public.profiles from authenticated`
+   antes de qualquer policy passar a confiar nesse campo.
+4. **Rota `/api/prices` persistindo histórico** em `price_checks`/`price_results`
+   (as tabelas existem e continuam vazias).
+5. **Cache e rate limit compartilhados.** Os atuais são por instância serverless.
+6. **Testes E2E** do resto das jornadas e responsividade.
 
 ## Verificações feitas
 
