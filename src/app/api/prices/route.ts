@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -335,6 +336,42 @@ async function classify(query: string, results: Result[]) {
   } catch { return results; }
 }
 
+/**
+ * Writes the search to the signed-in person's history. Deliberately best effort:
+ * a search that found real offers must never fail because the history write did,
+ * and guests simply have nowhere to write to.
+ */
+async function recordHistory(query: string, source: string, results: Result[]) {
+  try {
+    const supabase = await getSupabaseServerClient();
+    if (!supabase) return;
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth.user?.id;
+    if (!userId) return;
+
+    const { data: check, error } = await supabase
+      .from("price_checks")
+      .insert({ user_id: userId, query, source })
+      .select("id")
+      .single();
+    if (error || !check) return;
+
+    const rows = results.slice(0, 8).map((item) => ({
+      check_id: check.id,
+      title: item.title.slice(0, 300),
+      store: item.store.slice(0, 120),
+      price: item.price,
+      condition: item.condition ?? null,
+      url: item.url,
+      shipping: item.shipping,
+      match_score: Number.isFinite(item.match) ? Math.round(item.match * 1000) / 1000 : null,
+    }));
+    if (rows.length > 0) await supabase.from("price_results").insert(rows);
+  } catch {
+    // History is a nice-to-have; swallow so the caller still gets its offers.
+  }
+}
+
 // ---------------------------------------------------------------- handler
 export async function GET(request: NextRequest) {
   const parsed = Query.safeParse(request.nextUrl.searchParams.get("q"));
@@ -388,5 +425,6 @@ export async function GET(request: NextRequest) {
   results = await classify(query, results);
   const body = { query, source, searchedAt: new Date().toISOString(), results, sources, cached: false };
   cacheSet(cacheKey, body);
+  await recordHistory(query, source, results);
   return NextResponse.json(body, { headers: { "cache-control": "no-store" } });
 }
