@@ -91,4 +91,5 @@ function Welcome({onGuest}:{onGuest:()=>void}){
  <p className="mt-2 text-xs text-[var(--subtle)]">A conta guarda suas builds e leva elas para qualquer aparelho.</p>
  <button onClick={onGuest} className="press mt-4 h-12 w-full rounded-2xl border border-[var(--border)] font-bold">Continuar sem conta</button>
  <p className="mt-2 text-xs text-[var(--subtle)]">Fica salvo só neste navegador. Dá para criar a conta depois — seus dados vão junto.</p>
- {error&&<p className="mt-4 text-sm text-[var(--primary)]">{error}</p>}</div></div>}
+ {error&&<p className="mt-4 text-sm text-[var(--primary)]">{error}</p>}
+ <p className="mt-8 text-xs text-[var(--subtle)]"><a href="/privacidade" className="underline">Privacidade</a> · <a href="/termos" className="underline">Termos</a></p></div></div>}
