@@ -12,7 +12,7 @@ import type { Build, Item, Notice, State } from "./types";
 const GUEST_IMPORT_KEY = "gabie-world:import-key";
 
 type BuildRow = { id: string; name: string; description: string; budget: string | number; created_at: string };
-type ItemRow = { id: string; build_id: string; category: string; name: string; status: string; priority: string; planned_price: string | number; paid_price: string | number; target_price: string | number | null; owned: boolean; favorite: boolean };
+type ItemRow = { id: string; build_id: string; category: string; name: string; status: string; priority: string; planned_price: string | number; paid_price: string | number; target_price: string | number | null; owned: boolean; favorite: boolean; technical_data: { url?: string } | null };
 type NoticeRow = { id: string; title: string; body: string; read_at: string | null; created_at: string };
 
 const num = (value: string | number | null | undefined) => (value == null ? 0 : typeof value === "number" ? value : Number(value) || 0);
@@ -44,7 +44,7 @@ export async function fetchRemoteState(supabase: SupabaseClient, userId: string)
   const ids = buildRows.map((row) => row.id);
   let itemRows: ItemRow[] = [];
   if (ids.length > 0) {
-    const items = await supabase.from("build_items").select("id,build_id,category,name,status,priority,planned_price,paid_price,target_price,owned,favorite").in("build_id", ids).order("created_at", { ascending: true });
+    const items = await supabase.from("build_items").select("id,build_id,category,name,status,priority,planned_price,paid_price,target_price,owned,favorite,technical_data").in("build_id", ids).order("created_at", { ascending: true });
     if (items.error) throw items.error;
     itemRows = (items.data ?? []) as ItemRow[];
   }
@@ -66,6 +66,9 @@ export async function fetchRemoteState(supabase: SupabaseClient, userId: string)
       owned: item.owned,
       favorite: item.favorite,
       targetPrice: item.target_price == null ? undefined : num(item.target_price),
+      // The shop link rides in technical_data so a found offer keeps its origin
+      // without needing a column of its own.
+      url: item.technical_data?.url || undefined,
     })),
   }));
 
@@ -79,7 +82,7 @@ export async function fetchRemoteState(supabase: SupabaseClient, userId: string)
 }
 
 const buildPayload = (build: Build, userId: string) => ({ id: build.id, user_id: userId, name: build.name, description: build.description, budget: build.budget });
-const itemPayload = (item: Item, buildId: string) => ({ id: item.id, build_id: buildId, category: item.category, name: item.name, status: item.status, priority: item.priority, planned_price: item.planned, paid_price: item.paid, target_price: item.targetPrice ?? null, owned: item.owned, favorite: item.favorite });
+const itemPayload = (item: Item, buildId: string) => ({ id: item.id, build_id: buildId, category: item.category, name: item.name, status: item.status, priority: item.priority, planned_price: item.planned, paid_price: item.paid, target_price: item.targetPrice ?? null, owned: item.owned, favorite: item.favorite, technical_data: item.url ? { url: item.url } : {} });
 const noticePayload = (notice: Notice, userId: string) => ({ id: notice.id, user_id: userId, kind: "app", title: notice.title, body: notice.body, read_at: notice.read ? new Date().toISOString() : null });
 
 /**
