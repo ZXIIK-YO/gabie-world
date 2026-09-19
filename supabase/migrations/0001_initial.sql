@@ -10,6 +10,7 @@ create table public.shared_builds(id uuid primary key default gen_random_uuid(),
 create index builds_user_idx on public.builds(user_id);create index items_build_idx on public.build_items(build_id);create index checks_user_created_idx on public.price_checks(user_id,created_at desc);create index notifications_user_created_idx on public.notifications(user_id,created_at desc);
 create function public.handle_new_user() returns trigger language plpgsql security definer set search_path=public as $$begin insert into public.profiles(id,email,display_name) values(new.id,new.email,coalesce(new.raw_user_meta_data->>'full_name',''));return new;end$$;
 create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 alter table public.profiles enable row level security;alter table public.builds enable row level security;alter table public.build_items enable row level security;alter table public.price_checks enable row level security;alter table public.price_results enable row level security;alter table public.notifications enable row level security;alter table public.shared_builds enable row level security;
 create policy profiles_self on public.profiles for select using(id=auth.uid());create policy profiles_update_self on public.profiles for update using(id=auth.uid()) with check(id=auth.uid());
 create policy builds_owner on public.builds for all using(user_id=auth.uid()) with check(user_id=auth.uid());
