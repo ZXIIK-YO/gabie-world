@@ -104,7 +104,11 @@ async function describeError(response: Response) {
   return out.replace(/key=[^&\s]+/gi, "key=***").slice(0, 260);
 }
 
-const GEMINI_MODEL = "gemini-3.5-flash-lite";
+// Grounding with Google Search is quota'd separately from the model, and the free
+// allowance differs per model, so try them in order and keep the first that will
+// actually search. Cheapest first.
+const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
+const GEMINI_MODEL = GEMINI_MODELS[0];
 
 function callGemini(model: string, key: string, prompt: string, grounded = true) {
   return fetchWithTimeout(
@@ -150,7 +154,14 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
   ].join(" ");
 
   try {
-    let response = await callGemini(GEMINI_MODEL, key, prompt);
+    let response = await callGemini(GEMINI_MODELS[0], key, prompt);
+    let model = GEMINI_MODELS[0];
+    // A 429 here means this model's Search grounding is capped, not that the key is
+    // spent — another model may still have allowance left.
+    for (let i = 1; i < GEMINI_MODELS.length && response.status === 429; i += 1) {
+      model = GEMINI_MODELS[i];
+      response = await callGemini(model, key, prompt);
+    }
     // A retired model answers 404 and names its successor. Following that pointer
     // once keeps search alive through a retirement instead of going dark until
     // somebody notices and edits this file.
@@ -161,11 +172,12 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
         return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-404 ${detail.slice(0, 200)}` } };
       }
       response = await callGemini(successor, key, prompt);
+      model = successor;
     }
 
     if (!response.ok) {
       const detail = await describeError(response);
-      const probe = response.status === 429 ? ` | probe: ${await probeWithoutGrounding(GEMINI_MODEL, key)}` : "";
+      const probe = response.status === 429 ? ` | tried ${GEMINI_MODELS.join(",")} | probe: ${await probeWithoutGrounding(GEMINI_MODEL, key)}` : "";
       return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-${response.status} ${detail}${probe}` } };
     }
 
@@ -180,7 +192,7 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
     if (!parsed.success) return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: "schema-mismatch" } };
 
     const results = rank(query, parsed.data.results);
-    return { results, report: { name: "gemini-google-search", ok: true, count: results.length } };
+    return { results, report: { name: `gemini-google-search (${model})`, ok: true, count: results.length } };
   } catch (error) {
     return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: safeReason(error) } };
   }
