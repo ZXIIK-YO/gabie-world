@@ -106,17 +106,36 @@ async function describeError(response: Response) {
 
 const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
-function callGemini(model: string, key: string, prompt: string) {
+function callGemini(model: string, key: string, prompt: string, grounded = true) {
   return fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
       cache: "no-store",
-      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.1 } }),
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        ...(grounded ? { tools: [{ google_search: {} }] } : {}),
+        generationConfig: { temperature: 0.1 },
+      }),
     },
     22_000,
   );
+}
+
+/**
+ * A 429 from Google does not say which quota ran out. Asking the same model one
+ * more time without the search tool splits the two cases that matter: if the
+ * plain call succeeds the model is fine and only grounding is capped, which is
+ * a different problem with a different fix.
+ */
+async function probeWithoutGrounding(model: string, key: string) {
+  try {
+    const response = await callGemini(model, key, "Responda apenas: ok", false);
+    return response.ok ? "model-ok-grounding-capped" : `model-also-${response.status}`;
+  } catch {
+    return "probe-failed";
+  }
 }
 
 async function searchWithGemini(query: string): Promise<{ results: Result[]; report: SourceReport }> {
@@ -145,7 +164,9 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
     }
 
     if (!response.ok) {
-      return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-${response.status} ${await describeError(response)}` } };
+      const detail = await describeError(response);
+      const probe = response.status === 429 ? ` | probe: ${await probeWithoutGrounding(GEMINI_MODEL, key)}` : "";
+      return { results: [], report: { name: "gemini-google-search", ok: false, count: 0, reason: `http-${response.status} ${detail}${probe}` } };
     }
 
     const payload = (await response.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
