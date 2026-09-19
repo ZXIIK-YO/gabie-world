@@ -198,6 +198,97 @@ async function searchWithGemini(query: string): Promise<{ results: Result[]; rep
   }
 }
 
+type CseItem = {
+  title?: string;
+  link?: string;
+  snippet?: string;
+  displayLink?: string;
+  pagemap?: {
+    offer?: Array<{ price?: string; pricecurrency?: string; availability?: string }>;
+    product?: Array<{ name?: string }>;
+    metatags?: Array<Record<string, string>>;
+  };
+};
+
+const BRL = (raw: string | undefined | null) => {
+  if (!raw) return 0;
+  // Search results mix "R$ 1.234,56", "1234.56" and "1.234,56" freely.
+  const cleaned = String(raw).replace(/[^\d.,]/g, "");
+  const normalised = cleaned.includes(",") ? cleaned.replace(/\./g, "").replace(",", ".") : cleaned;
+  const value = Number.parseFloat(normalised);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+};
+
+/** Structured price if the shop published one, which is far more trustworthy than a snippet. */
+function priceFromPagemap(item: CseItem) {
+  const meta = item.pagemap?.metatags?.[0] ?? {};
+  return BRL(item.pagemap?.offer?.[0]?.price) || BRL(meta["og:price:amount"]) || BRL(meta["product:price:amount"]);
+}
+
+/**
+ * The free path to the same place. Gemini's built-in Search grounding is not on
+ * the free tier (every model answers 429 while the same model without the tool
+ * answers fine), so Programmable Search runs the Google query — 100/day free —
+ * and Gemini, ungrounded, turns those real results into structured offers.
+ */
+async function searchWithCse(query: string): Promise<{ results: Result[]; report: SourceReport }> {
+  const name = "google-cse+gemini";
+  const cseKey = process.env.GOOGLE_CSE_KEY;
+  const cx = process.env.GOOGLE_CSE_CX;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!cseKey || !cx) return { results: [], report: { name, ok: false, count: 0, reason: "missing-cse-config" } };
+  if (!geminiKey) return { results: [], report: { name, ok: false, count: 0, reason: "missing-key" } };
+
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(cseKey)}&cx=${encodeURIComponent(cx)}&q=${encodeURIComponent(`${query} preço comprar`)}&num=10&gl=br&hl=pt-BR&lr=lang_pt`;
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 10_000);
+    if (!response.ok) return { results: [], report: { name, ok: false, count: 0, reason: `cse-http-${response.status} ${await describeError(response)}` } };
+
+    const items = ((await response.json()) as { items?: CseItem[] }).items ?? [];
+    if (items.length === 0) return { results: [], report: { name, ok: true, count: 0, reason: "cse-empty" } };
+
+    // Anything the shop marked up is already a real price; Gemini only has to read
+    // the rest. Keeping both lets us tell the two apart when something looks off.
+    const context = items.map((item, i) => ({
+      i,
+      title: item.title ?? "",
+      store: item.displayLink ?? "",
+      url: item.link ?? "",
+      snippet: (item.snippet ?? "").slice(0, 220),
+      structuredPrice: priceFromPagemap(item),
+    }));
+
+    const prompt = [
+      `Estes são resultados reais de busca no Google para "${query}" em lojas brasileiras.`,
+      `Para cada um que seja uma PÁGINA DE PRODUTO com preço identificável, devolva uma oferta.`,
+      `Use "structuredPrice" quando for maior que zero; caso contrário extraia o preço do snippet.`,
+      `Descarte resultados sem preço, listas, blogs, reviews e comparadores.`,
+      `Responda SOMENTE com JSON no formato {"results":[{"title":"","store":"","price":0,"condition":"Novo","shipping":null,"url":"https://..."}]}.`,
+      `A "url" precisa ser exatamente uma das urls fornecidas. Nunca invente preço, loja ou link.`,
+      JSON.stringify(context),
+    ].join(" ");
+
+    const answer = await callGemini(GEMINI_MODELS[0], geminiKey, prompt, false);
+    if (!answer.ok) return { results: [], report: { name, ok: false, count: 0, reason: `gemini-http-${answer.status} ${await describeError(answer)}` } };
+
+    const payload = (await answer.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
+    const json = extractJson(text);
+    if (!json) return { results: [], report: { name, ok: false, count: 0, reason: "no-json-in-answer" } };
+
+    const parsed = z.object({ results: z.array(resultSchema) }).safeParse(json);
+    if (!parsed.success) return { results: [], report: { name, ok: false, count: 0, reason: "schema-mismatch" } };
+
+    // The model can still echo a url that was not in the list; drop those rather
+    // than send someone to a link Google never returned.
+    const allowed = new Set(context.map((c) => c.url));
+    const results = rank(query, parsed.data.results.filter((r) => allowed.has(r.url)));
+    return { results, report: { name, ok: true, count: results.length } };
+  } catch (error) {
+    return { results: [], report: { name, ok: false, count: 0, reason: safeReason(error) } };
+  }
+}
+
 /**
  * Mercado Livre kept as a fallback on purpose, but their public search API has
  * been returning 403 for anonymous callers (every path, including /sites/MLB).
@@ -267,6 +358,12 @@ export async function GET(request: NextRequest) {
   let results = gemini.results;
 
   if (results.length === 0) {
+    const cse = await searchWithCse(query);
+    sources.push(cse.report);
+    if (cse.results.length > 0) { source = "google-cse+gemini"; results = cse.results; }
+  }
+
+  if (results.length === 0) {
     const meli = await searchMercadoLivre(query);
     sources.push(meli.report);
     if (meli.results.length > 0) { source = "mercado-livre-fallback"; results = meli.results; }
@@ -280,8 +377,8 @@ export async function GET(request: NextRequest) {
       searchedAt: new Date().toISOString(),
       results: [],
       sources,
-      notice: geminiMissing
-        ? "A busca de preços ainda não está ligada: falta configurar a chave do Gemini."
+      notice: geminiMissing || sources.some((s) => s.reason === "missing-cse-config")
+        ? "A busca de preços ainda não está totalmente ligada. Estamos configurando."
         : "Nenhuma oferta encontrada agora. Tenta escrever o modelo de outro jeito?",
     };
     // 200 on purpose: "no offers" is a normal outcome, not a server error.
